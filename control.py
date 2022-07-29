@@ -1,6 +1,6 @@
-
 import numpy as np
 from queue import Queue
+import graphics
 
 
 class Config(object):
@@ -9,7 +9,7 @@ class Config(object):
         self.t = t
 
 
-class ControlStrategy2SR:
+class Control:
 
     # Constant parameters
     l_0 = 30 * 10**(-3)  # plastic link length
@@ -93,13 +93,16 @@ class ControlStrategy2SR:
     def stiffnessPlanner(self, q_d):
         s = [[0, 0], [0, 1], [1, 0], [1, 1]]
         s_array = []
+        q_array = []
         q_new = [None] * len(s)
 
         q = self.q_0
+        q_array.append(q)
+
         diff = np.linalg.norm(q - q_d)
 
         t = 0.1
-        velocity_coeff = 5
+        velocity_coeff = 1
 
         while diff > 10**(-5):
             # print(t)
@@ -115,10 +118,12 @@ class ControlStrategy2SR:
             s_array.append(s[min_i])
 
             q = q_new[min_i]
+            q_array.append(q)
+
             diff = np.linalg.norm(q - q_d)
             t += self.dt
 
-        return s_array
+        return s_array, q_array
 
     def createGraph(self, q_d):
         # Graph-related data structure that contains intermediate configurations
@@ -148,13 +153,15 @@ class ControlStrategy2SR:
 
 
 if __name__ == "__main__":
-    control = ControlStrategy2SR(np.array([0, 0, 0.6, 15, 15]))
-    # control.createGraph(np.array([0.01276, -0.01865, 0.6, -61.665, -61.665]))
-    # s_array = control.stiffnessPlanner(np.array([0.01276, -0.01865, 0.6, -61.665, -61.665]))
-    s_array = control.stiffnessPlanner(
-        np.array([-0.03, 0.0212, 0.23, -50, 65]))
-    # print(len(s_array))
-    print(s_array)
+    control = Control(np.array([0, 0, 0.6, 15, 15]))
+    config = control.stiffnessPlanner(
+        np.array([0.01276, -0.01865, 0.6, -61.665, -61.665]))
+    # config = control.stiffnessPlanner(np.array([-0.03, 0.0212, 0.23, -50, 65]))
+    # print(config[0])
+    # print(len(config[1]))
+
+    anim = graphics.Animation(config[1])
+    anim.plotMotion()
 
 # a = 60 * 10**(-3)
 # l_0 = 30 * 10**(-3) # plastic link length
