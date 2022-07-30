@@ -153,14 +153,18 @@ class Control:
 
 
 if __name__ == "__main__":
+
+    q_target = np.array([0.01276, -0.01865, 0.6, -61.665, -61.665])
+    # q_target = np.array([-0.03, 0.0212, 0.23, -50, 65])
+    # q_target = np.array([0.0326, -0.0221, -0.23, -61.665, 61.665])
+
     control = Control(np.array([0, 0, 0.6, 15, 15]))
-    config = control.stiffnessPlanner(
-        np.array([0.01276, -0.01865, 0.6, -61.665, -61.665]))
-    # config = control.stiffnessPlanner(np.array([-0.03, 0.0212, 0.23, -50, 65]))
+    config = control.stiffnessPlanner(q_target)
+
     # print(config[0])
     # print(len(config[1]))
 
-    anim = graphics.Animation(config[1])
+    anim = graphics.Animation(config[1], q_target)
     anim.plotMotion()
 
 # a = 60 * 10**(-3)

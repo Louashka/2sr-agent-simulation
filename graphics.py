@@ -7,7 +7,7 @@ import numpy as np
 
 class Animation:
 
-    def __init__(self, q_list):
+    def __init__(self, q_list, q_d):
 
         self.L_VSS = 40 * 10**(-3)  # VSS length
         self.L0 = 30 * 10**(-3)  # plastic link length
@@ -15,6 +15,7 @@ class Animation:
         self.LINK_DIAG = ((self.L0 / 2)**2 + (self.D_BRIDGE / 2)**2)**(1 / 2)
 
         self.q_list = q_list
+        self.q_d = q_d
         self.n = len(self.q_list)
 
         x_range, y_range = self.defineRange()
@@ -27,10 +28,19 @@ class Animation:
         self.patch = Rectangle((0, 0), 0, 0, fc='y')
         self.ax.add_patch(self.patch)
 
-        self.arc1, = self.ax.plot([], [], lw=2, marker=".", color="blue")
-        self.arc2, = self.ax.plot([], [], lw=2, marker=".", color="blue")
+        self.arc1, = self.ax.plot([], [], lw=2, color="blue")
+        self.arc2, = self.ax.plot([], [], lw=2, color="blue")
 
         self.centre, = self.ax.plot([], [], lw=2, marker=".", color="black")
+
+        # target configuration
+        self.target_patch = Rectangle((0, 0), 0, 0, fc='y', alpha=0.5)
+        self.ax.add_patch(self.target_patch)
+
+        self.target_arc1, = self.ax.plot(
+            [], [], lw=1, color="blue", alpha=0.5)
+        self.target_arc2, = self.ax.plot(
+            [], [], lw=1, color="blue", alpha=0.5)
 
     def defineRange(self):
         margin = 0.1
@@ -93,7 +103,25 @@ class Animation:
 
         self.centre.set_data(x, y)
 
-        return self.patch, self.arc1, self.arc2, self.centre
+        x_t = self.q_d[0] - self.L0 / 2
+        y_t = self.q_d[1] - self.D_BRIDGE / 2
+        phi_t = self.q_d[2]
+
+        self.target_patch.set_width(self.L0)
+        self.target_patch.set_height(self.D_BRIDGE)
+        self.target_patch.set_xy([x_t, y_t])
+
+        target_transform = mpl.transforms.Affine2D().rotate_around(
+            self.q_d[0], self.q_d[1], phi_t) + self.ax.transData
+        self.target_patch.set_transform(target_transform)
+
+        target_seg1 = self.genArc(self.q_d, 1)
+        target_seg2 = self.genArc(self.q_d, 2)
+
+        self.target_arc1.set_data(target_seg1[0], target_seg1[1])
+        self.target_arc2.set_data(target_seg2[0], target_seg2[1])
+
+        return self.patch, self.arc1, self.arc2, self.centre, self.target_patch, self.target_arc1, self.target_arc2
 
     def plotMotion(self):
         anim = FuncAnimation(self.fig, self.update,
