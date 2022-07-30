@@ -54,9 +54,9 @@ if __name__ == "__main__":
     # control = Control(np.array([0, 0, 0.6, 15, 15]))
     # config = control.stiffnessPlanner(q_target)
 
-    q_start = [0, 0, 0.6, 15, 15]
-    sigma = [0, 0]
-    v = [0, 0, 0, 0.05, 0]
+    q_start = [0, 0, 0.5, 0, 0]
+    sigma = [0, 1]
+    v = [0, 0.05, 0, 0, 0]
     sim_time = 10
 
     q = kinematics.fk(q_start, sigma, v, sim_time)

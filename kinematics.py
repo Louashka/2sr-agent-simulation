@@ -15,7 +15,7 @@ def fk(q_start, sigma, v, sim_time):
         J = hybridJacobian(q_start, q_current, sigma)
 
         q_dot = np.matmul(J, v)
-        q_new = q_current + q_dot * q_dot
+        q_new = q_current + q_dot * dt
 
         q_list.append(q_new)
 
@@ -82,8 +82,8 @@ def hybridJacobian(q_start, q, sigma):
     J = np.array([[pos1 * np.sum(j11), pos2 * np.sum(j12), int(not (sigma[0] or sigma[1])) * np.cos(q[2]), int(not (sigma[0] or sigma[1])) * (-np.sin(q[2])), 0],
                   [pos1 * np.sum(j21), pos2 * np.sum(j22), int(not (sigma[0] or sigma[1]))
                    * np.sin(q[2]), int(not (sigma[0] or sigma[1])) * np.cos(q[2]), 0],
-                  [-(int(not sigma[0] and sigma[1]) / rho2[1] + int(sigma[0] and sigma[1]) * 3 / (4 * rho2[2])), int(
-                      not sigma[1] and sigma[0]) / rho1[1] + int(sigma[0] and sigma[1]) * 3 / (4 * rho1[2]), 0, 0, int(not (sigma[0] or sigma[1]))],
+                  [-(int(not sigma[0] and sigma[1]) / rho2[1] + int(sigma[0] and sigma[1]) * 3 / (4 * rho2[2])), int(not sigma[1]
+                                                                                                                     and sigma[0]) / rho1[1] + int(sigma[0] and sigma[1]) * 3 / (4 * rho1[2]), 0, 0, int(not (sigma[0] or sigma[1]))],
                   [int(not sigma[1] and sigma[0]) * 3 / (2 * globals_.L_VSS * rho1[0]) + int(sigma[0] and sigma[1]) * 3 / (4 * globals_.L_VSS * rho1[2]),
                    int(not sigma[1] and sigma[0]) / (globals_.L_VSS * rho1[1]) + int(sigma[0] and sigma[1]) * 3 / (4 * globals_.L_VSS * rho1[2]), 0, 0, 0],
                   [int(not sigma[0] and sigma[1]) / (globals_.L_VSS * rho2[1]) + int(sigma[0] and sigma[1]) * 3 / (4 * globals_.L_VSS * rho2[2]), int(not sigma[0] and sigma[1]) * 3 / (2 * globals_.L_VSS * rho2[0]) + int(sigma[0] and sigma[1]) * 3 / (4 * globals_.L_VSS * rho2[2]), 0, 0, 0]])
