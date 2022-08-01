@@ -2,19 +2,8 @@ import numpy as np
 import sympy as sym
 import globals_
 
-r = sym.Symbol('r')
-phi = sym.Symbol(r'\phi')
-k0 = sym.Symbol('k\'')
-k = sym.Symbol('k')
-pos1 = None
-pos2 = None
-
 
 def fk(q_start, sigma, v, sim_time):
-
-    global pos1, pos2
-    pos1 = bodyFramePosition(-1)
-    pos2 = bodyFramePosition(1)
 
     dt = 0.1
     t = np.arange(dt, sim_time + dt, dt)
@@ -64,10 +53,14 @@ def hybridJacobian(q_start, q, sigma):
     sigma_full_soft = int(sigma[0] and sigma[1])
 
     Delta = np.zeros((2, 2))
-    Delta[:, 0] = (sigma_soft2 * Kappa[1, 1] + sigma_full_soft * Kappa[1, 2]) * np.array(pos2.subs([(k, q[4]), (k0, q_start[4]),
-                                                                                                    (phi, q_start[2]), (r, rho[1, 0])])).ravel()
-    Delta[:, 1] = (sigma_soft1 * Kappa[0, 1] + sigma_full_soft * Kappa[0, 2]) * np.array(pos1.subs([(k, q[3]), (k0, q_start[3]),
-                                                                                                    (phi, q_start[2]), (r, rho[0, 0])])).ravel()
+    # Delta[:, 0] = (sigma_soft2 * Kappa[1, 1] + sigma_full_soft * Kappa[1, 2]) * np.array(pos[1].subs([(k, q[4]), (k0, q_start[4]),
+    #                                                                                                   (phi, q_start[2]), (r, rho[1, 0])])).ravel()
+    # Delta[:, 1] = (sigma_soft1 * Kappa[0, 1] + sigma_full_soft * Kappa[0, 2]) * np.array(pos[0].subs([(k, q[3]), (k0, q_start[3]),
+    #                                                                                                   (phi, q_start[2]), (r, rho[0, 0])])).ravel()
+    Delta[:, 0] = (sigma_soft2 * Kappa[1, 1] + sigma_full_soft * Kappa[1, 2]) * \
+        getBodyFrame(rho[1, 0], q_start[2], q[4], q_start[4], 2).ravel()
+    Delta[:, 1] = (sigma_soft1 * Kappa[0, 1] + sigma_full_soft * Kappa[0, 2]) * \
+        getBodyFrame(rho[0, 0], q_start[2], q[3], q_start[3], 1).ravel()
 
     J_soft = np.array([[-sigma_soft2 * Phi[1, 1] - sigma_full_soft * Phi[1, 2],
                         sigma_soft1 * Phi[0, 1] + sigma_full_soft * Phi[0, 2]],
@@ -81,10 +74,28 @@ def hybridJacobian(q_start, q, sigma):
     return J
 
 
+def getBodyFrame(r, phi, k, k0, seg):
+
+    if seg == 1:
+        pos = np.array([[-0.0266 * r * np.sin(phi + 0.0266 * k - 0.04 * k0) - 0.0006 * np.sin(phi + 0.04 * k - 0.04 * k0)],
+                        [0.0266 * r * np.cos(phi + 0.0266 * k - 0.04 * k0) + 0.0006 * np.cos(phi + 0.04 * k - 0.04 * k0)]])
+        # pos = bodyFramePosition(-1)
+    elif seg == 2:
+        pos = np.array([[-0.0266 * r * np.sin(phi - 0.0266 * k + 0.04 * k0) - 0.0006 * np.sin(phi - 0.04 * k + 0.04 * k0)],
+                        [0.0266 * r * np.cos(phi - 0.0266 * k + 0.04 * k0) + 0.0006 * np.cos(phi - 0.04 * k + 0.04 * k0)]])
+        # pos = bodyFramePosition(1)
+
+    return pos
+
+
 def bodyFramePosition(flag):
 
     x = sym.Symbol('x')
     y = sym.Symbol('y')
+    r = sym.Symbol('r')
+    phi = sym.Symbol(r'\phi')
+    k = sym.Symbol('k')
+    k0 = sym.Symbol('k\'')
 
     th = k * globals_.L_VSS / globals_.M[0]
 

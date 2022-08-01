@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     q_start = [0, 0, 0.6, -33, -33]
     sigma = [1, 1]
-    v = [0.01, 0.01, 0, 0, 0]
+    v = [0.007, 0.00, 0, 0, 0]
     sim_time = 10
 
     q = kinematics.fk(q_start, sigma, v, sim_time)
