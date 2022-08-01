@@ -113,8 +113,8 @@ def update(i):
             q_target[0], q_target[1], phi_t) + ax.transData
         target_link.set_transform(target_transform)
 
-        target_seg1 = genArc(target_link, 1)
-        target_seg2 = genArc(target_link, 2)
+        target_seg1 = genArc(q_target, 1)
+        target_seg2 = genArc(q_target, 2)
 
         target_arc1.set_data(target_seg1[0], target_seg1[1])
         target_arc2.set_data(target_seg2[0], target_seg2[1])
@@ -124,14 +124,14 @@ def update(i):
     return link, arc1, arc2, centre
 
 
-def plotMotion(q, sim_time, q_d=[]):
+def plotMotion(q, frames, q_d=[]):
     global q_list, q_target
     q_list = q
     q_target = q_d
 
-    dt = 0.1
-    t = np.arange(dt, sim_time + dt, dt)
-    frames = len(t)
+    # dt = 0.1
+    # t = np.arange(dt, sim_time + dt, dt)
+    # frames = len(t)
 
     anim = FuncAnimation(fig, update, frames,
                          init_func=init, interval=1, repeat=True)

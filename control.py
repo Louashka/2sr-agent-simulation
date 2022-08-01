@@ -8,6 +8,7 @@ class Control:
 
     def __init__(self, q_0):
         self.q_0 = q_0  # Initial configuration
+        self.dt = 0.1
 
     def stiffnessPlanner(self, q_d):
         s = [[0, 0], [0, 1], [1, 0], [1, 1]]
@@ -18,16 +19,18 @@ class Control:
         q = self.q_0
         q_array.append(q)
 
+        q_d = np.array(q_d)
+
         diff = np.linalg.norm(q - q_d)
 
         t = 0.1
-        velocity_coeff = 1
+        velocity_coeff = 5
 
         while diff > 10**(-5):
             # print(t)
             q_d_dot = velocity_coeff * (q_d - q) * t
             for i in range(len(s)):
-                J = self.hybridJacobian(q, s[i][0], s[i][1])
+                J = kinematics.hybridJacobian(self.q_0, q, s[i])
                 upsilon = np.matmul(np.linalg.pinv(J), q_d_dot)
                 q_dot = np.matmul(J, upsilon)
                 q_new[i] = q + self.dt * q_dot
@@ -47,18 +50,29 @@ class Control:
 
 if __name__ == "__main__":
 
-    # q_target = np.array([0.01276, -0.01865, 0.6, -61.665, -61.665])
-    # q_target = np.array([-0.03, 0.0212, 0.23, -50, 65])
-    # q_target = np.array([0.0326, -0.0221, -0.23, -61.665, 61.665])
+    q_start = [0, 0, 0.6, 0, 0]
 
-    # control = Control(np.array([0, 0, 0.6, 15, 15]))
-    # config = control.stiffnessPlanner(q_target)
+    # EXAMPLE OF FORWARD KINEMATICS
 
-    q_start = [0, 0, 0.6, -33, -33]
     sigma = [1, 1]
-    v = [0.007, 0.00, 0, 0, 0]
+    v = [0.007, 0.007, 0, 0, 0]
     sim_time = 10
+    dt = 0.1
+    t = np.arange(dt, sim_time + dt, dt)
+    frames = len(t)
 
     q = kinematics.fk(q_start, sigma, v, sim_time)
+    # graphics.plotMotion(q, frames)
 
-    graphics.plotMotion(q, sim_time)
+    # q_target = [0.01276, -0.01865, 0.6, -61.665, -61.665]
+    # q_target = [-0.03, 0.0212, 0.23, -50, 65]
+    # q_target = [0.0326, -0.0221, -0.23, -61.665, 61.665]
+    q_target = q[-1].tolist()
+
+    control = Control(q_start)
+    config = control.stiffnessPlanner(q_target)
+    frames = len(config[1])
+
+    print(config[0])
+
+    graphics.plotMotion(config[1], frames, q_d=q_target)
