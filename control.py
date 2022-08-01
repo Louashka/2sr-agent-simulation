@@ -60,8 +60,5 @@ if __name__ == "__main__":
     sim_time = 10
 
     q = kinematics.fk(q_start, sigma, v, sim_time)
-    # val = kinematics.hybridJacobian(q_start, q_start, sigma)
-    # print(val)
 
-    anim = graphics.Animation(q)
-    anim.plotMotion()
+    graphics.plotMotion(q, sim_time)
