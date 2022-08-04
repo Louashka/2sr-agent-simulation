@@ -86,8 +86,8 @@ if __name__ == "__main__":
          rnd.uniform(-0.03, 0.03), rnd.uniform(-0.03, 0.03), rnd.uniform(-0.1, 0.1)]
     print("Velocity: ", v)
 
-    sigma = [1, 1]
-    v = [0.004, 0.007, 0, 0, 0]
+    # sigma = [1, 1]
+    # v = [0.004, 0.007, 0, 0, 0]
     sim_time = 10
     dt = 0.1
     t = np.arange(dt, sim_time + dt, dt)
