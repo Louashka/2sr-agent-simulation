@@ -17,6 +17,8 @@ arc1, = ax.plot([], [], lw=2, color="blue")
 arc2, = ax.plot([], [], lw=2, color="blue")
 centre, = ax.plot([], [], lw=2, marker=".", color="black")
 
+stiffness_text = ax.text(0, 0, '', fontsize=12)
+
 target_link = Rectangle((0, 0), 0, 0, fc='y', alpha=0.5)
 target_arc1, = ax.plot([], [], lw=1, color="blue", alpha=0.5)
 target_arc2, = ax.plot([], [], lw=1, color="blue", alpha=0.5)
@@ -74,7 +76,7 @@ def genArc(q, seg):
 
 
 def update(i):
-    global link, target_link, arc1, arc2, centre, target_arc1, target_arc2
+    global link, target_link, arc1, arc2, centre, stiffness_text, target_arc1, target_arc2
     q = q_list[i]
 
     x = q[0]
@@ -110,6 +112,10 @@ def update(i):
 
     centre.set_data(x, y)
 
+    stiffness_text.set_text(
+        "s1: " + str(s_array[i][0]) + ", s2: " + str(s_array[i][1]))
+    stiffness_text.set_position((0.05, 0.1))
+
     if q_target:
 
         x_t = q_target[0] - globals_.L_LINK / 2
@@ -130,9 +136,9 @@ def update(i):
         target_arc1.set_data(target_seg1[0], target_seg1[1])
         target_arc2.set_data(target_seg2[0], target_seg2[1])
 
-        return link, arc1, arc2, centre, target_link, target_arc1, target_arc2
+        return link, arc1, arc2, centre, stiffness_text, target_link, target_arc1, target_arc2,
 
-    return link, arc1, arc2, centre
+    return link, arc1, arc2, centre, stiffness_text,
 
 
 def plotMotion(q, s, frames, q_d=[]):
