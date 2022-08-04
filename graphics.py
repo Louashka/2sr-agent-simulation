@@ -10,6 +10,7 @@ LINK_DIAG = ((globals_.L_LINK / 2)**2 + (globals_.D_BRIDGE / 2)**2)**(1 / 2)
 fig, ax = plt.subplots()
 q_list = []
 q_target = []
+s_array = []
 
 link = Rectangle((0, 0), 0, 0, fc='y')
 arc1, = ax.plot([], [], lw=2, color="blue")
@@ -97,6 +98,16 @@ def update(i):
     arc1.set_data(seg1[0], seg1[1])
     arc2.set_data(seg2[0], seg2[1])
 
+    if s_array[i][0] == 0:
+        arc1.set_color("red")
+    else:
+        arc1.set_color("blue")
+
+    if s_array[i][1] == 0:
+        arc2.set_color("red")
+    else:
+        arc2.set_color("blue")
+
     centre.set_data(x, y)
 
     if q_target:
@@ -124,9 +135,10 @@ def update(i):
     return link, arc1, arc2, centre
 
 
-def plotMotion(q, frames, q_d=[]):
-    global q_list, q_target
+def plotMotion(q, s, frames, q_d=[]):
+    global q_list, s_array, q_target
     q_list = q
+    s_array = s
     q_target = q_d
 
     # dt = 0.1
