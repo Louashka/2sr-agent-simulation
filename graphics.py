@@ -141,15 +141,11 @@ def update(i):
     return link, arc1, arc2, centre, stiffness_text,
 
 
-def plotMotion(q, s, frames, q_d=[]):
+def plotMotion(q, s, frames, q_t=[]):
     global q_list, s_array, q_target
     q_list = q
     s_array = s
-    q_target = q_d
-
-    # dt = 0.1
-    # t = np.arange(dt, sim_time + dt, dt)
-    # frames = len(t)
+    q_target = q_t
 
     anim = FuncAnimation(fig, update, frames,
                          init_func=init, interval=1, repeat=True)

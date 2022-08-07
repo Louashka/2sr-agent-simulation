@@ -1,5 +1,4 @@
 import numpy as np
-from queue import Queue
 import kinematics
 import graphics
 import random as rnd
@@ -8,101 +7,126 @@ import random as rnd
 class Control:
 
     def __init__(self, q_0):
-        self.q_0 = q_0  # Initial configuration
-        self.dt = 0.1
+        self.q_0 = q_0  # initial configuration
+        self.dt = 0.1  # step size
 
-    def stiffnessPlanner(self, q_d):
+    def motionPlanner(self, q_target):
+        # A set of possible stiffness configurations
         s = [[0, 0], [0, 1], [1, 0], [1, 1]]
-        s_array = []
-        s_array.append(s[0])
+        # Initialize a sequence of VSB stiffness values
+        s_list = []
+        # 2SRR always starts from the rigid state
+        s_list.append(s[0])
+        # Initialize the number of stiffness transitions
         switch_counter = 0
 
-        q_array = []
-        q_new = [None] * len(s)
+        # Initialize a trajectory
+        q_list = []
+        q = self.q_0  # current configuration
+        q_list.append(q)
 
-        q = self.q_0
-        q_array.append(q)
+        # A set of possible configurations
+        q_ = [None] * len(s)
 
-        q_d = np.array(q_d)
+        q_t = np.array(q_target)
+        # Euclidean distance between current and target configurations (error)
+        dist = np.linalg.norm(q - q_t)
 
-        diff = np.linalg.norm(q - q_d)
-        error_array = []
-
-        t = 0.1
+        t = 0.1  # current time
+        # feedback gain
         velocity_coeff = np.ones((5,), dtype=int)
+        # Index of the current stiffness configuration
         current_i = None
 
-        while diff > 0:
+        while dist > 0:
 
-            flag = False
+            flag = False  # indicates whether VSB stiffness has changed
 
-            q_tilda = velocity_coeff * (q_d - q) * t
+            # INVERSE KINEMATICS
+
+            q_tilda = velocity_coeff * (q_t - q) * t
             for i in range(len(s)):
+                # Jacobian matrix
                 J = kinematics.hybridJacobian(self.q_0, q, s[i])
-                upsilon = np.matmul(np.linalg.pinv(J), q_tilda)
-                q_dot = np.matmul(J, upsilon)
-                q_new[i] = q + (1 - np.exp(-1 * t)) * q_dot * self.dt
+                # velocity input commands
+                v = np.matmul(np.linalg.pinv(J), q_tilda)
+                q_dot = np.matmul(J, v)
+                q_[i] = q + (1 - np.exp(-1 * t)) * q_dot * self.dt
 
-            error = np.linalg.norm(q_new - q_d, axis=1)
-            min_i = np.argmin(error)
+            # Determine the stiffness configuration that promotes
+            # faster approach to the target
+            dist_ = np.linalg.norm(q_ - q_t, axis=1)
+            min_i = np.argmin(dist_)
 
-            step = np.linalg.norm(q - np.array(q_new), axis=1)
+            # The extent of the configuration change
+            delta_q_ = np.linalg.norm(q - np.array(q_), axis=1)
 
+            # Stiffness transition is committed only if the previous
+            # stiffness configuration does not promote further motion
             if min_i != current_i and current_i is not None:
-                if step[current_i] > 10**(-17):
+                if delta_q_[current_i] > 10**(-17):
                     min_i = current_i
                 else:
                     flag = True
 
-            q = q_new[min_i]
+            q = q_[min_i]  # update current configuration
+            dist = np.linalg.norm(q - q_t)  # update error
+            current_i = min_i  # update current stiffness
 
-            if (step[min_i] > 10 ** (-5)):
-                q_array.append(q)
-                s_array.append(s[min_i])
+            if (delta_q_[current_i] > 10 ** (-5)):
+                q_list.append(q)
+                s_list.append(s[current_i])
 
                 if flag:
                     switch_counter += 1
 
-            error_array.append(step[min_i])
+            t += self.dt  # increment time
 
-            current_i = min_i
-
-            diff = np.linalg.norm(q - q_d)
-            t += self.dt
-
-        return q_array, s_array, switch_counter, error_array
+        return q_list, s_list, switch_counter
 
 
 if __name__ == "__main__":
 
+    # SIMULATION PARAMETERS
+
+    sim_time = 10  # simulation time
+    dt = 0.1  # step size
+    t = np.arange(dt, sim_time + dt, dt)  # span
+    frames = len(t)  # number of frames
+
+    # Initial configuration
     q_start = [0, 0, rnd.uniform(-0.6, 0.06),
                rnd.uniform(-80.0, 80.0), rnd.uniform(-80.0, 80.0)]
 
-    # EXAMPLE OF FORWARD KINEMATICS
+    # FORWARD KINEMATICS
 
+    # Stiffness of the VS segments
     sigma = [rnd.randint(0, 1), rnd.randint(0, 1)]
     print("Stiffness: ", sigma)
+    # Input velocity commands
     v = [rnd.uniform(-0.008, 0.008), rnd.uniform(-0.008, 0.008),
          rnd.uniform(-0.03, 0.03), rnd.uniform(-0.03, 0.03), rnd.uniform(-0.1, 0.1)]
     print("Velocity: ", v)
 
-    # sigma = [1, 1]
-    # v = [0.004, 0.007, 0, 0, 0]
-    sim_time = 10
-    dt = 0.1
-    t = np.arange(dt, sim_time + dt, dt)
-    frames = len(t)
+    # Generate a trajectory by an FK model
+    q_list = kinematics.fk(q_start, sigma, v, sim_time)
 
-    q = kinematics.fk(q_start, sigma, v, sim_time)
-    # graphics.plotMotion(q, frames)
+    # Animation of the 2SRR motion along the trajectory
+    # graphics.plotMotion(q_list, frames)
 
-    q_target = q[-1].tolist()
+    # MOTION PLANNER (STIFFNESS PLANNER + INVERSE KINEMATICS)
 
+    # We take the last configuration of an FK trajectory
+    # as a target configuration
+    q_target = q_list[-1].tolist()
+
+    # Initialize the controller
     control = Control(q_start)
-    config = control.stiffnessPlanner(q_target)
+    # Generate a trajectory and a sequence of stiffness values
+    config = control.motionPlanner(q_target)
     frames = len(config[0])
 
-    # print(config[1])
     print("Stiffness transitions: ", config[2])
 
-    graphics.plotMotion(config[0], config[1], frames, q_d=q_target)
+    # Animation of the 2SRR motion towards the target
+    graphics.plotMotion(config[0], config[1], frames, q_t=q_target)
