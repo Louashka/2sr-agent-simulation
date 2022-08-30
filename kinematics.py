@@ -7,7 +7,7 @@ import globals_
 
 def fk(q_start, sigma, v, sim_time):
 
-    dt = 0.1  # step size
+    dt = 0.05  # step size
     t = np.arange(dt, sim_time + dt, dt)  # span
 
     # Initialize a trajectory

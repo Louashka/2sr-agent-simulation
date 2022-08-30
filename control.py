@@ -27,6 +27,7 @@ class Control:
 
         # A set of possible configurations
         q_ = [None] * len(s)
+        v_ = [None] * len(s)
 
         q_t = np.array(q_target)
         # Euclidean distance between current and target configurations (error)
@@ -49,8 +50,8 @@ class Control:
                 # Jacobian matrix
                 J = kinematics.hybridJacobian(self.q_0, q, s[i])
                 # velocity input commands
-                v = np.matmul(np.linalg.pinv(J), q_tilda)
-                q_dot = np.matmul(J, v)
+                v_[i] = np.matmul(np.linalg.pinv(J), q_tilda)
+                q_dot = np.matmul(J, v_[i])
                 q_[i] = q + (1 - np.exp(-1 * t)) * q_dot * self.dt
 
             # Determine the stiffness configuration that promotes
@@ -76,6 +77,7 @@ class Control:
             if (delta_q_[current_i] > 10 ** (-5)):
                 q_list.append(q)
                 s_list.append(s[current_i])
+                print(v_[current_i])
 
                 if flag:
                     switch_counter += 1
@@ -97,6 +99,8 @@ if __name__ == "__main__":
     # Initial configuration
     q_start = [0, 0, rnd.uniform(-0.6, 0.06),
                rnd.uniform(-80.0, 80.0), rnd.uniform(-80.0, 80.0)]
+  #   q_start = [1.27296588e-01, -2.48691099e-02,  7.27445334e-02,  2.52447516e+01,
+  # 2.26051360e+01]
 
     # FORWARD KINEMATICS
 
@@ -119,6 +123,7 @@ if __name__ == "__main__":
     # We take the last configuration of an FK trajectory
     # as a target configuration
     q_target = q_list[-1].tolist()
+    # q_target = [0.30314961,  0.27486911, -1.13779664, 22.76592851, 24.13558513]
 
     # Initialize the controller
     control = Control(q_start)
@@ -126,7 +131,8 @@ if __name__ == "__main__":
     config = control.motionPlanner(q_target)
     frames = len(config[0])
 
-    print("Stiffness transitions: ", config[2])
+    # print("Stiffness transitions: ", config[2])
+    # print(config[0])
 
     # Animation of the 2SRR motion towards the target
     graphics.plotMotion(config[0], config[1], frames, q_t=q_target)
