@@ -2,13 +2,14 @@ import numpy as np
 import kinematics
 import graphics
 import random as rnd
+import globals_
+import pandas as pd
 
 
 class Control:
 
     def __init__(self, q_0):
         self.q_0 = q_0  # initial configuration
-        self.dt = 0.1  # step size
 
     def motionPlanner(self, q_target):
         # A set of possible stiffness configurations
@@ -33,7 +34,7 @@ class Control:
         # Euclidean distance between current and target configurations (error)
         dist = np.linalg.norm(q - q_t)
 
-        t = 0.1  # current time
+        t = globals_.DT  # current time
         # feedback gain
         velocity_coeff = np.ones((5,), dtype=int)
         # Index of the current stiffness configuration
@@ -52,7 +53,7 @@ class Control:
                 # velocity input commands
                 v_[i] = np.matmul(np.linalg.pinv(J), q_tilda)
                 q_dot = np.matmul(J, v_[i])
-                q_[i] = q + (1 - np.exp(-1 * t)) * q_dot * self.dt
+                q_[i] = q + (1 - np.exp(-1 * t)) * q_dot * globals_.DT
 
             # Determine the stiffness configuration that promotes
             # faster approach to the target
@@ -73,18 +74,25 @@ class Control:
             q = q_[min_i]  # update current configuration
             dist = np.linalg.norm(q - q_t)  # update error
             current_i = min_i  # update current stiffness
-
             if (delta_q_[current_i] > 10 ** (-5)):
                 q_list.append(q)
                 s_list.append(s[current_i])
-                print(v_[current_i])
+                # print(s_list[current_i])
 
                 if flag:
                     switch_counter += 1
 
-            t += self.dt  # increment time
+            t += globals_.DT  # increment time
 
         return q_list, s_list, switch_counter
+
+
+def phase_transition(s1, s2):
+    if s1 == 0:
+        return s2
+    if s2 == 0:
+        return s1
+    return s1 * s2
 
 
 if __name__ == "__main__":
@@ -92,25 +100,28 @@ if __name__ == "__main__":
     # SIMULATION PARAMETERS
 
     sim_time = 10  # simulation time
-    dt = 0.1  # step size
-    t = np.arange(dt, sim_time + dt, dt)  # span
+    t = np.arange(globals_.DT, sim_time + globals_.DT, globals_.DT)  # span
     frames = len(t)  # number of frames
 
     # Initial configuration
-    q_start = [0, 0, rnd.uniform(-0.6, 0.06),
-               rnd.uniform(-80.0, 80.0), rnd.uniform(-80.0, 80.0)]
-  #   q_start = [1.27296588e-01, -2.48691099e-02,  7.27445334e-02,  2.52447516e+01,
-  # 2.26051360e+01]
+    # q_start = [0, 0, rnd.uniform(-0.6, 0.06),
+    #            rnd.uniform(-60.0, 60.0), rnd.uniform(-60.0, 60.0)]
+    # print("Start: ", q_start)
+    # q_start = [0.26,  0.23, -0.3, 28, -16]
+    # q_start = [0.29, 0.2, -0.62, -27, 15]
+    # q_start = [0.231, 0.20, 0.44, -11, -13]
+    # q_start = [0.238, 0.276, -0.24, -38, -24]
+    q_start = [0.231,  0.262, -0.34, -25, -16]
 
     # FORWARD KINEMATICS
 
     # Stiffness of the VS segments
     sigma = [rnd.randint(0, 1), rnd.randint(0, 1)]
-    print("Stiffness: ", sigma)
+    # print("Stiffness: ", sigma)
     # Input velocity commands
     v = [rnd.uniform(-0.008, 0.008), rnd.uniform(-0.008, 0.008),
          rnd.uniform(-0.03, 0.03), rnd.uniform(-0.03, 0.03), rnd.uniform(-0.1, 0.1)]
-    print("Velocity: ", v)
+    # print("Velocity: ", v)
 
     # Generate a trajectory by an FK model
     q_list = kinematics.fk(q_start, sigma, v, sim_time)
@@ -121,9 +132,14 @@ if __name__ == "__main__":
     # MOTION PLANNER (STIFFNESS PLANNER + INVERSE KINEMATICS)
 
     # We take the last configuration of an FK trajectory
-    # as a target configuration
-    q_target = q_list[-1].tolist()
-    # q_target = [0.30314961,  0.27486911, -1.13779664, 22.76592851, 24.13558513]
+    # # as a target configuration
+    # q_target = q_list[-1].tolist()
+    # print("Target: ", q_target)
+    # q_target = [0.24, 0.21, 0.5, 28, 3]
+    # q_target = [0.27, 0.24, 0.9, 30, 15]
+    # q_target = [0.225, 0.245, -0.235, 38, 34]
+    # q_target = [0.24,  0.3, -0.15, -15, -5]
+    q_target = [0.241, 0.266, -0.47, -25, 12]
 
     # Initialize the controller
     control = Control(q_start)
@@ -132,7 +148,24 @@ if __name__ == "__main__":
     frames = len(config[0])
 
     # print("Stiffness transitions: ", config[2])
-    # print(config[0])
+    # print(config[0], config[1])
+    df = pd.DataFrame(config[0], columns=['x', 'y', 'phi', 'k1', 'k2'])
+    df = pd.concat([df, pd.DataFrame(config[1], columns=['s1', 's2'])], axis=1)
+    tr = pd.concat([df.s1.diff().fillna(0), df.s2.diff().fillna(0)], axis=1)
+    tr_comb = tr.apply(
+        lambda x: phase_transition(x['s1'], x['s2']), axis=1)
+
+    times = [1] * len(df)
+
+    for i in tr_comb.index[tr_comb == 1].tolist():
+        times[i] = 30
+    for i in tr_comb.index[tr_comb == -1].tolist():
+        times[i] = 90
+
+    # df = df.loc[df.index.repeat(times)].reset_index(drop=True)
+    print(len(df))
+
+    df.to_csv('Data/simulation5.csv', index=False)
 
     # Animation of the 2SRR motion towards the target
-    graphics.plotMotion(config[0], config[1], frames, q_t=q_target)
+    # graphics.plotMotion(config[0], config[1], frames, q_t=q_target)

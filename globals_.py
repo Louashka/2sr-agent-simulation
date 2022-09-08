@@ -1,3 +1,5 @@
+DT = 0.05
+
 L_VSS = 40 * 10**(-3)  # VSS length
 L_LINK = 30 * 10**(-3)  # plastic link length
 D_BRIDGE = 7 * 10**(-3)  # bridge diameter
