@@ -7,7 +7,10 @@ import numpy as np
 import globals_
 
 
-LINK_DIAG = ((globals_.L_LINK / 2)**2 + (globals_.D_BRIDGE / 2)**2)**(1 / 2)
+link_width = globals_.D_BRIDGE
+link_length = globals_.L_LINK
+
+LINK_DIAG = ((link_length / 2)**2 + (link_width / 2)**2)**(1 / 2)
 fig, ax = plt.subplots()
 q_list = []
 q_target = []
@@ -17,15 +20,17 @@ x_range = 0
 y_range = 0
 
 link = Rectangle((0, 0), 0, 0, fc='y')
-arc1, = ax.plot([], [], lw=2, color="blue")
-arc2, = ax.plot([], [], lw=2, color="blue")
-centre, = ax.plot([], [], lw=2, marker=".", color="black")
+arc1, = ax.plot([], [], lw=5, color="blue")
+arc2, = ax.plot([], [], lw=5, color="blue")
+centre, = ax.plot([], [], lw=5, marker=".", color="black")
 
-stiffness_text = ax.text(0, 0, '', fontsize=12)
+stiffness_text = ax.text(0, 0, '', fontsize=24)
 
-target_link = Rectangle((0, 0), 0, 0, fc='y', alpha=0.5)
-target_arc1, = ax.plot([], [], lw=1, color="blue", alpha=0.5)
-target_arc2, = ax.plot([], [], lw=1, color="blue", alpha=0.5)
+target_link = Rectangle((0, 0), 0, 0, fc='y', alpha=0.3)
+target_arc1, = ax.plot([], [], lw=3, color="black", alpha=0.3)
+target_arc2, = ax.plot([], [], lw=3, color="black", alpha=0.3)
+
+# ax.axis('off')
 
 
 def init():
@@ -43,7 +48,7 @@ def init():
 
 
 def defineRange():
-    margin = 0.1
+    margin = 0.058
 
     q_array = np.array(q_list)
     x_min, y_min = q_array[:, :2].min(axis=0)
@@ -64,8 +69,8 @@ def genArc(q, seg):
 
     gamma_array = q[2] + flag * q[2 + seg] * s
 
-    x_0 = q[0] + flag * np.cos(q[2]) * globals_.L_LINK / 2
-    y_0 = q[1] + flag * np.sin(q[2]) * globals_.L_LINK / 2
+    x_0 = q[0] + flag * np.cos(q[2]) * link_length / 2
+    y_0 = q[1] + flag * np.sin(q[2]) * link_length / 2
 
     if q[2 + seg] == 0:
         x = x_0 + [0, flag * globals_.L_VSS * np.cos(q[2])]
@@ -87,11 +92,11 @@ def update(i):
     y = q[1]
     phi = q[2]
 
-    x0 = x - globals_.L_LINK / 2
-    y0 = y - globals_.D_BRIDGE / 2
+    x0 = x - link_length / 2
+    y0 = y - link_width / 2
 
-    link.set_width(globals_.L_LINK)
-    link.set_height(globals_.D_BRIDGE)
+    link.set_width(link_length)
+    link.set_height(link_width)
     link.set_xy([x0, y0])
 
     transform = mpl.transforms.Affine2D().rotate_around(
@@ -118,17 +123,19 @@ def update(i):
 
     stiffness_text.set_text(
         "s1: " + str(s_array[i][0]) + ", s2: " + str(s_array[i][1]))
-    stiffness_text.set_position(
-        (x_range[1] - (x_range[1] - x_range[0]) / 3.5, y_range[1] - (y_range[1] - y_range[0]) / 15))
+    # stiffness_text.set_position(
+    #     (x_range[1] - (x_range[1] - x_range[0]) / 1.95, y_range[1] - (y_range[1] - y_range[0]) / 11.5))
+    # stiffness_text.set_position(
+    #     (x_range[0] + (x_range[1] - x_range[0]) / 25, y_range[0] + (y_range[1] - y_range[0]) / 40))
 
     if q_target:
 
-        x_t = q_target[0] - globals_.L_LINK / 2
-        y_t = q_target[1] - globals_.D_BRIDGE / 2
+        x_t = q_target[0] - link_length / 2
+        y_t = q_target[1] - link_width / 2
         phi_t = q_target[2]
 
-        target_link.set_width(globals_.L_LINK)
-        target_link.set_height(globals_.D_BRIDGE)
+        target_link.set_width(link_length)
+        target_link.set_height(link_width)
         target_link.set_xy([x_t, y_t])
 
         target_transform = mpl.transforms.Affine2D().rotate_around(
@@ -156,7 +163,7 @@ def plotMotion(q, s, frames, q_t=[]):
                          init_func=init, interval=1, repeat=True)
 
     # Save animation
-    # mywriter = FFMpegWriter(fps=30)
-    # anim.save('anim8.mp4', writer=mywriter)
+    mywriter = FFMpegWriter(fps=30)
+    anim.save('Animation//sim_for_video_5.mp4', writer=mywriter, dpi=300)
 
     plt.show()

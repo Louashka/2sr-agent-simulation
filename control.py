@@ -111,7 +111,7 @@ if __name__ == "__main__":
     # q_start = [0.29, 0.2, -0.62, -27, 15]
     # q_start = [0.231, 0.20, 0.44, -11, -13]
     # q_start = [0.238, 0.276, -0.24, -38, -24]
-    q_start = [0.231,  0.262, -0.34, -25, -16]
+    q_start = [0.231,  0.262, -0.34, -27, -16]
 
     # FORWARD KINEMATICS
 
@@ -139,12 +139,16 @@ if __name__ == "__main__":
     # q_target = [0.27, 0.24, 0.9, 30, 15]
     # q_target = [0.225, 0.245, -0.235, 38, 34]
     # q_target = [0.24,  0.3, -0.15, -15, -5]
-    q_target = [0.241, 0.266, -0.47, -25, 12]
+    q_target = [0.241, 0.266, -0.5, -25, 12]
 
     # Initialize the controller
     control = Control(q_start)
     # Generate a trajectory and a sequence of stiffness values
     config = control.motionPlanner(q_target)
+    for i in range(15):
+        config[0].append(config[0][-1])
+        config[1].append(config[1][-1])
+
     frames = len(config[0])
 
     # print("Stiffness transitions: ", config[2])
@@ -165,7 +169,7 @@ if __name__ == "__main__":
     # df = df.loc[df.index.repeat(times)].reset_index(drop=True)
     print(len(df))
 
-    df.to_csv('Data/simulation5.csv', index=False)
+    # df.to_csv('Data/simulation2csv', index=False)
 
     # Animation of the 2SRR motion towards the target
-    # graphics.plotMotion(config[0], config[1], frames, q_t=q_target)
+    graphics.plotMotion(config[0], config[1], frames, q_t=q_target)
