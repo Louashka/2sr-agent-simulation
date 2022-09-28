@@ -11,7 +11,12 @@ link_width = globals_.D_BRIDGE
 link_length = globals_.L_LINK
 
 LINK_DIAG = ((link_length / 2)**2 + (link_width / 2)**2)**(1 / 2)
+
+font_size = 14
 fig, ax = plt.subplots()
+plt.xticks(fontsize = font_size)
+plt.yticks(fontsize = font_size)
+
 q_list = []
 q_target = []
 s_array = []
@@ -24,7 +29,7 @@ arc1, = ax.plot([], [], lw=5, color="blue")
 arc2, = ax.plot([], [], lw=5, color="blue")
 centre, = ax.plot([], [], lw=5, marker=".", color="black")
 
-stiffness_text = ax.text(0, 0, '', fontsize=24)
+stiffness_text = ax.text(0, 0, '', fontsize=font_size)
 
 target_link = Rectangle((0, 0), 0, 0, fc='y', alpha=0.3)
 target_arc1, = ax.plot([], [], lw=3, color="black", alpha=0.3)
@@ -110,21 +115,21 @@ def update(i):
     arc2.set_data(seg2[0], seg2[1])
 
     if s_array[i][0] == 0:
-        arc1.set_color("red")
-    else:
         arc1.set_color("blue")
+    else:
+        arc1.set_color("red")
 
     if s_array[i][1] == 0:
-        arc2.set_color("red")
-    else:
         arc2.set_color("blue")
+    else:
+        arc2.set_color("red")
 
     centre.set_data(x, y)
 
     stiffness_text.set_text(
         "s1: " + str(s_array[i][0]) + ", s2: " + str(s_array[i][1]))
     # stiffness_text.set_position(
-    #     (x_range[1] - (x_range[1] - x_range[0]) / 1.95, y_range[1] - (y_range[1] - y_range[0]) / 11.5))
+    #     (x_range[1] - (x_range[1] - x_range[0]) / 3, y_range[1] - (y_range[1] - y_range[0]) / 15))
     # stiffness_text.set_position(
     #     (x_range[0] + (x_range[1] - x_range[0]) / 25, y_range[0] + (y_range[1] - y_range[0]) / 40))
 
@@ -164,6 +169,6 @@ def plotMotion(q, s, frames, q_t=[]):
 
     # Save animation
     mywriter = FFMpegWriter(fps=30)
-    anim.save('Animation//sim_for_video_5.mp4', writer=mywriter, dpi=300)
+    anim.save('Animation/sim_for_video_5.mp4', writer=mywriter, dpi=300)
 
     plt.show()
