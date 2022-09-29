@@ -13,7 +13,7 @@ link_length = globals_.L_LINK
 
 LINK_DIAG = ((link_length / 2)**2 + (link_width / 2)**2)**(1 / 2)
 
-font_size = 12
+font_size = 20
 fig, ax = plt.subplots()
 plt.xticks(fontsize = font_size)
 plt.yticks(fontsize = font_size)
@@ -185,14 +185,16 @@ def plotAnalysis(q_fk, s_fk, q_pm, s_pm):
     pd_mp = pd.DataFrame(data = q_pm, columns = cols)
 
     error_fk = np.sqrt(np.square(pd_fk - q_target).sum(axis=1)).values
+    error_fk = error_fk / max(error_fk)
     t_norm_fk = np.linspace(0, 1, num=len(error_fk), endpoint=True)
 
     error_mp = np.sqrt(np.square(pd_mp - q_target).sum(axis=1)).values
+    error_mp = error_mp / max(error_mp)
     t_norm_mp = np.linspace(0, 1, num=len(error_mp), endpoint=True)
 
-    fig = plt.figure(figsize=(10,4))
+    fig = plt.figure(figsize=(12,4.5))
 
-    plt.plot(t_norm_fk, error_fk, '--', color = colours[s_ref.index(s_fk)], linewidth = 3, label = 'FK')
+    plt.plot(t_norm_fk, error_fk, '--', color = colours[s_ref.index(s_fk)], linewidth = 4, label = 'FK')
 
     s_set = []
     i_set = []
@@ -221,12 +223,15 @@ def plotAnalysis(q_fk, s_fk, q_pm, s_pm):
         print(colours[s_ref.index(s)])
         error_slice = error_mp[i_set[i]:i_set[i+1]]
         t_slice = t_norm_mp[i_set[i]:i_set[i+1]]
-        plt.plot(t_slice, error_slice, color = colours[s_ref.index(s)], linewidth = 3, label = 'MP ' + str(s))
+        plt.plot(t_slice, error_slice, color = colours[s_ref.index(s)], linewidth = 4, label = 'MP ' + str(s))
 
     plt.xlabel('Normalised Time', fontsize = font_size)
     plt.ylabel('Normalised ' + r'$\Delta q$', fontsize = font_size)
-    plt.legend(fontsize = font_size)
+    plt.legend(ncol = 2, fontsize = font_size)
+    plt.xticks(fontsize = font_size)
+    plt.yticks(fontsize = font_size)
+    plt.grid()
 
     fig.tight_layout()
-    fig.savefig('Plots/fk-vs-mp-7.png', format='png', dpi=300)
+    # fig.savefig('Plots/fk-vs-mp-10.png', format='png', dpi=300)
     plt.show()
