@@ -4,6 +4,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.animation import FFMpegWriter
 from matplotlib.patches import Rectangle
 import numpy as np
+import pandas as pd
 import globals_
 
 
@@ -12,7 +13,7 @@ link_length = globals_.L_LINK
 
 LINK_DIAG = ((link_length / 2)**2 + (link_width / 2)**2)**(1 / 2)
 
-font_size = 14
+font_size = 12
 fig, ax = plt.subplots()
 plt.xticks(fontsize = font_size)
 plt.yticks(fontsize = font_size)
@@ -126,8 +127,8 @@ def update(i):
 
     centre.set_data(x, y)
 
-    stiffness_text.set_text(
-        "s1: " + str(s_array[i][0]) + ", s2: " + str(s_array[i][1]))
+    # stiffness_text.set_text(
+    #     "s1: " + str(s_array[i][0]) + ", s2: " + str(s_array[i][1]))
     # stiffness_text.set_position(
     #     (x_range[1] - (x_range[1] - x_range[0]) / 3, y_range[1] - (y_range[1] - y_range[0]) / 15))
     # stiffness_text.set_position(
@@ -169,6 +170,63 @@ def plotMotion(q, s, frames, q_t=[]):
 
     # Save animation
     mywriter = FFMpegWriter(fps=30)
-    anim.save('Animation/sim_for_video_5.mp4', writer=mywriter, dpi=300)
+    # anim.save('Animation/sim_for_video_5.mp4', writer=mywriter, dpi=300)
 
+    plt.show()
+
+def plotAnalysis(q_fk, s_fk, q_pm, s_pm):
+
+    q_target = q_fk[-1].tolist()
+    colours = ['#0072bd', '#d95319', '#edb120', '#008176']
+    s_ref = [[0, 0], [0, 1], [1, 0], [1, 1]]
+
+    cols = ['x', 'y', 'phi', 'k1', 'k2']
+    pd_fk = pd.DataFrame(data = q_fk, columns = cols)
+    pd_mp = pd.DataFrame(data = q_pm, columns = cols)
+
+    error_fk = np.sqrt(np.square(pd_fk - q_target).sum(axis=1)).values
+    t_norm_fk = np.linspace(0, 1, num=len(error_fk), endpoint=True)
+
+    error_mp = np.sqrt(np.square(pd_mp - q_target).sum(axis=1)).values
+    t_norm_mp = np.linspace(0, 1, num=len(error_mp), endpoint=True)
+
+    fig = plt.figure(figsize=(10,4))
+
+    plt.plot(t_norm_fk, error_fk, '--', color = colours[s_ref.index(s_fk)], linewidth = 3, label = 'FK')
+
+    s_set = []
+    i_set = []
+
+    current_s = s_pm[0]
+    s_set.append(current_s)
+    i_set.append(0)
+
+    counter = 0
+    for s in s_pm:
+        if s != current_s:
+            s_set.append(s)
+            i_set.append(counter)
+
+            current_s = s
+
+        counter += 1
+
+    if i_set[-1] != len(s_pm)-1:
+        i_set.append(len(s_pm))
+
+    print(i_set)
+
+    for i, s in zip(range(len(i_set)-1), s_set):
+        print(s)
+        print(colours[s_ref.index(s)])
+        error_slice = error_mp[i_set[i]:i_set[i+1]]
+        t_slice = t_norm_mp[i_set[i]:i_set[i+1]]
+        plt.plot(t_slice, error_slice, color = colours[s_ref.index(s)], linewidth = 3, label = 'MP ' + str(s))
+
+    plt.xlabel('Normalised Time', fontsize = font_size)
+    plt.ylabel('Normalised ' + r'$\Delta q$', fontsize = font_size)
+    plt.legend(fontsize = font_size)
+
+    fig.tight_layout()
+    fig.savefig('Plots/fk-vs-mp-7.png', format='png', dpi=300)
     plt.show()

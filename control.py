@@ -46,7 +46,7 @@ class Control:
 
             # INVERSE KINEMATICS
 
-            q_tilda = velocity_coeff * (q_t - q) * t
+            q_tilda = 1 * (q_t - q) * t
             for i in range(len(s)):
                 # Jacobian matrix
                 J = kinematics.hybridJacobian(self.q_0, q, s[i])
@@ -77,10 +77,10 @@ class Control:
             if (delta_q_[current_i] > 10 ** (-5)):
                 q_list.append(q)
                 s_list.append(s[current_i])
-                # print(s_list[current_i])
+            # print(s_list[current_i])
 
-                if flag:
-                    switch_counter += 1
+            if flag:
+                switch_counter += 1
 
             t += globals_.DT  # increment time
 
@@ -101,17 +101,16 @@ if __name__ == "__main__":
 
     sim_time = 10  # simulation time
     t = np.arange(globals_.DT, sim_time + globals_.DT, globals_.DT)  # span
-    frames = len(t)  # number of frames
 
     # Initial configuration
-    # q_start = [0, 0, rnd.uniform(-0.6, 0.06),
-    #            rnd.uniform(-60.0, 60.0), rnd.uniform(-60.0, 60.0)]
+    q_start = [0, 0, rnd.uniform(-0.6, 0.06),
+               rnd.uniform(-60.0, 60.0), rnd.uniform(-60.0, 60.0)]
     # print("Start: ", q_start)
     # q_start = [0.26,  0.23, -0.3, 28, -16]
     # q_start = [0.29, 0.2, -0.62, -27, 15]
     # q_start = [0.231, 0.20, 0.44, -11, -13]
     # q_start = [0.238, 0.276, -0.24, -38, -24]
-    q_start = [0.231,  0.262, -0.34, -27, -16]
+    # q_start = [0.231,  0.262, -0.34, -27, -16]
 
     # FORWARD KINEMATICS
 
@@ -125,6 +124,8 @@ if __name__ == "__main__":
 
     # Generate a trajectory by an FK model
     q_list = kinematics.fk(q_start, sigma, v, sim_time)
+    frames = len(q_list)  # number of frames
+    # print(len(q_list))
 
     # Animation of the 2SRR motion along the trajectory
     # graphics.plotMotion(q_list, frames)
@@ -133,23 +134,24 @@ if __name__ == "__main__":
 
     # We take the last configuration of an FK trajectory
     # # as a target configuration
-    # q_target = q_list[-1].tolist()
+    q_target = q_list[-1].tolist()
     # print("Target: ", q_target)
     # q_target = [0.24, 0.21, 0.5, 28, 3]
     # q_target = [0.27, 0.24, 0.9, 30, 15]
     # q_target = [0.225, 0.245, -0.235, 38, 34]
     # q_target = [0.24,  0.3, -0.15, -15, -5]
-    q_target = [0.241, 0.266, -0.5, -25, 12]
+    # q_target = [0.241, 0.266, -0.5, -25, 12]
 
     # Initialize the controller
     control = Control(q_start)
     # Generate a trajectory and a sequence of stiffness values
     config = control.motionPlanner(q_target)
-    for i in range(15):
-        config[0].append(config[0][-1])
-        config[1].append(config[1][-1])
+    # for i in range(15):
+    #     config[0].append(config[0][-1])
+    #     config[1].append(config[1][-1])
 
     frames = len(config[0])
+    # print(frames)
 
     # print("Stiffness transitions: ", config[2])
     # print(config[0], config[1])
@@ -167,9 +169,12 @@ if __name__ == "__main__":
         times[i] = 90
 
     # df = df.loc[df.index.repeat(times)].reset_index(drop=True)
-    print(len(df))
-
     # df.to_csv('Data/simulation2csv', index=False)
 
     # Animation of the 2SRR motion towards the target
-    graphics.plotMotion(config[0], config[1], frames, q_t=q_target)
+    # graphics.plotMotion(config[0], config[1], frames, q_t=q_target)
+    graphics.plotAnalysis(q_list, sigma, config[0], config[1][1:])
+
+
+
+
